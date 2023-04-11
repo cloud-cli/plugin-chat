@@ -1,25 +1,30 @@
 {
-  "name": "@cloud-cli/",
+  "name": "plugin-chat",
+  "private": true,
   "version": "0.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "jest",
-    "tdd": "jest --watchAll"
+    "test": "echo ok"
   },
   "prettier": "@cloud-cli/prettier-config",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cloud-cli/.git"
+    "url": "https://github.com/cloud-cli/plugin-chat.git"
   },
   "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
-    "@cloud-cli/prettier-config": "^1.0.0",
     "@cloud-cli/jest-config": "^1.0.0",
-    "@cloud-cli/typescript-config": "^1.0.0"
+    "@cloud-cli/prettier-config": "^1.0.0",
+    "@cloud-cli/typescript-config": "^1.0.0",
+    "@types/node": "^18.15.11"
+  },
+  "dependencies": {
+    "@cloud-cli/gw": "^1.6.1",
+    "openai": "^3.2.1"
   }
 }
