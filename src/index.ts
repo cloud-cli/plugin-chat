@@ -7,6 +7,7 @@ const apiKey = String(process.env.API_KEY);
 const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : undefined;
 const configuration = new Configuration({ apiKey });
 const openai = new OpenAIApi(configuration);
+const debug = !!process.env.DEBUG;
 
 class Chat extends Resource {
   body = { json: {} };
@@ -18,13 +19,18 @@ class Chat extends Resource {
       throw new Error('Message required');
     }
 
-    const completion = await openai.createChatCompletion({
+    const options = {
       model: model || 'gpt-3.5-turbo',
       max_tokens: maxTokens,
       messages: [{ role: 'user', content: String(message) }],
-    });
+    }
+    
+    if (debug) { console.log('REQUEST', options); }
+    const completion = await openai.createChatCompletion(options);
 
+    if (debug) { console.log('RESPONSE', completion.data); }
     const messages = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
+    
     response.writeHead(200, { 'Content-Type': 'text/plain' });
     response.end(messages);
   }
