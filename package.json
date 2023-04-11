@@ -2,10 +2,10 @@
   "name": "plugin-chat",
   "private": true,
   "version": "0.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./index.js",
   "type": "module",
   "scripts": {
+    "ci": "npm i && npx rollup -c rollup.config.mjs",
     "build": "tsc",
     "test": "echo ok"
   },
@@ -20,6 +20,7 @@
   "devDependencies": {
     "@cloud-cli/jest-config": "^1.0.0",
     "@cloud-cli/prettier-config": "^1.0.0",
+    "@cloud-cli/rollup-config": "^1.0.0",
     "@cloud-cli/typescript-config": "^1.0.0",
     "@types/node": "^18.15.11"
   },

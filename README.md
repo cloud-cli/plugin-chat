@@ -1,1 +1,1 @@
-# ts-template
+# Chat plugin
