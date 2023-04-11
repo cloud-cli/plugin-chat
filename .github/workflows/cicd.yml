@@ -8,3 +8,4 @@ jobs:
       name: cloud-cli/plugin-chat
       baseImage: cloud-cli/node:latest
       defaultBranch: main
+      buildCommand: npm run build
