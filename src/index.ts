@@ -13,16 +13,20 @@ class Chat extends Resource {
   body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let { model, message } = request.body as any;
-
-    if (!message) {
+    let { model, message, messages } = request.body as any;
+    
+    if (!message && !messages) {
       throw new Error('Message required');
+    }
+    
+    if (!messages) {
+      messages = [{ role: 'user', content: String(message) }]
     }
 
     const options = {
       model: model || 'gpt-3.5-turbo',
       max_tokens: maxTokens,
-      messages: [{ role: 'user', content: String(message) }],
+      messages,
     }
     
     if (debug) { console.log('REQUEST', options); }
