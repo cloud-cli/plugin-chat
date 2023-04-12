@@ -33,10 +33,10 @@ class Chat extends Resource {
     const completion = await openai.createChatCompletion(options);
 
     if (debug) { console.log('RESPONSE', completion.data); }
-    const messages = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
+    const responses = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
     
     response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.end(messages);
+    response.end(responses);
   }
 }
 
