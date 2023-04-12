@@ -13,10 +13,14 @@ class Chat extends Resource {
   body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
+    if (debug) { console.log('REQUEST', request.body); }
+    
     let { model, message, messages } = request.body as any;
     
     if (!message && !messages) {
-      throw new Error('Message required');
+      response.writeHead(400, 'Message required');
+      response.end();
+      return;
     }
     
     if (!messages) {
