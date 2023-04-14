@@ -28,10 +28,8 @@ class Chat extends Resource {
     }
     
     const maxLength = maxTokens / 2;
-    while (messages.length) {
-      if (String(messages.map(m => m.content)) > maxLength) {
-        messages.shift();
-      }
+    while (messages.length && String(messages.map(m => m.content)) > maxLength) {
+      messages.shift();
     }
     
     if (!messages.length) {
