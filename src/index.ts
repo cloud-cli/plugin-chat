@@ -4,7 +4,7 @@ import { Configuration, OpenAIApi } from 'openai';
 
 const port = Number(process.env.PORT);
 const apiKey = String(process.env.API_KEY);
-const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : undefined;
+const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : 4096;
 const configuration = new Configuration({ apiKey });
 const openai = new OpenAIApi(configuration);
 const debug = !!process.env.DEBUG;
@@ -25,6 +25,19 @@ class Chat extends Resource {
     
     if (!messages) {
       messages = [{ role: 'user', content: String(message) }]
+    }
+    
+    const maxLength = maxTokens / 2;
+    while (messages.length) {
+      if (String(messages.map(m => m.content)) > maxLength) {
+        messages.shift();
+      }
+    }
+    
+    if (!messages.length) {
+      response.writeHead(400, 'Message too large');
+      response.end();
+      return;
     }
 
     const options = {
