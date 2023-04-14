@@ -5,6 +5,7 @@ import { Configuration, OpenAIApi } from 'openai';
 const port = Number(process.env.PORT);
 const apiKey = String(process.env.API_KEY);
 const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : 4096;
+const defaultModel = process.env.API_MODEL || 'gpt-3.5-turbo';
 const configuration = new Configuration({ apiKey });
 const openai = new OpenAIApi(configuration);
 const debug = !!process.env.DEBUG;
@@ -28,7 +29,7 @@ class Chat extends Resource {
     }
     
     const maxLength = maxTokens / 2;
-    while (messages.length && String(messages.map(m => m.content)) > maxLength) {
+    while (messages.length && String(messages.map(m => m.content)).length > maxLength) {
       messages.shift();
     }
     
@@ -39,7 +40,7 @@ class Chat extends Resource {
     }
 
     const options = {
-      model: model || 'gpt-3.5-turbo',
+      model: model || defaultModel,
       max_tokens: maxTokens,
       messages,
     }
