@@ -4,7 +4,8 @@ import { Configuration, OpenAIApi } from 'openai';
 
 const port = Number(process.env.PORT);
 const apiKey = String(process.env.API_KEY);
-const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : 4096;
+const AUTH_URL = String(process.env.AUTH_URL);
+const maxTokens = process.env.API_MAX_TOKENS ? Number(process.env.API_MAX_TOKENS) : undefined;
 const defaultModel = process.env.API_MODEL || 'gpt-3.5-turbo';
 const configuration = new Configuration({ apiKey });
 const openai = new OpenAIApi(configuration);
@@ -14,8 +15,6 @@ class Chat extends Resource {
   body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    if (debug) { console.log('REQUEST', request.body); }
-    
     let { model, message, messages } = request.body as any;
     
     if (!message && !messages) {
@@ -44,15 +43,28 @@ class Chat extends Resource {
       max_tokens: maxTokens,
       messages,
     }
-    
-    if (debug) { console.log('REQUEST', options); }
-    const completion = await openai.createChatCompletion(options);
 
-    if (debug) { console.log('RESPONSE', completion.data); }
-    const responses = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
-    
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.end(responses);
+    const start = Date.now();
+    if (debug) {
+      console.log('REQUEST', options); 
+    }
+
+    try {
+      const completion = await openai.createChatCompletion(options);
+  
+      if (debug) {
+        console.log('RESPONSE in %s seconds', Date.now() - start, completion.data);
+      }
+  
+      const responses = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
+      
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.end(responses);
+    } catch (error) {
+      console.error(error);
+      response.writeHead(500);
+      response.end(String(error));
+    }
   }
 }
 
