@@ -46,14 +46,14 @@ class Chat extends Resource {
 
     const start = Date.now();
     if (debug) {
-      console.log('REQUEST', options); 
+      console.log('REQUEST', JSON.stringify(options));
     }
 
     try {
       const completion = await openai.createChatCompletion(options);
   
       if (debug) {
-        console.log('RESPONSE in %s seconds', Date.now() - start, completion.data);
+        console.log('RESPONSE in %s seconds', Date.now() - start, JSON.stringify(completion.data));
       }
   
       const responses = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
