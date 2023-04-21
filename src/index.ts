@@ -27,9 +27,11 @@ class Chat extends Resource {
       messages = [{ role: 'user', content: String(message) }]
     }
     
-    const maxLength = maxTokens / 2;
-    while (messages.length && String(messages.map(m => m.content)).length > maxLength) {
-      messages.shift();
+    if (maxTokens) {
+      const maxLength = maxTokens / 2;
+      while (messages.length && String(messages.map(m => m.content)).length > maxLength) {
+        messages.shift();
+      }
     }
     
     if (!messages.length) {
