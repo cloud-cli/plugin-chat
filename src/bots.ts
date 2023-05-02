@@ -17,6 +17,7 @@ export class Bots extends Resource {
   async post(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
+    
     BotService.create(id, name, header);
 
     response.writeHead(201);
@@ -26,7 +27,7 @@ export class Bots extends Resource {
   async get(request: Request, response: Response) {
     const { id } = await AuthService.getProfile(request);
     const name = request.url.slice(1);
-    const bot = BotService.get(id, name);
+    const bot = name ? BotService.get(id, name) : BotService.getAll(id);
 
     response.writeHead(bot ? 200 : 404);
     response.end(JSON.stringify(bot));
@@ -44,7 +45,7 @@ export class Bots extends Resource {
 
 export class Bot {
   readonly model: string = defaultModel;
-  constructor(protected name: string, protected header: string) {}
+  constructor(protected owner: string|number, protected name: string, protected header: string) {}
 
   get preamble(): ChatCompletionRequestMessage {
     return { role: 'system', content: this.header };
@@ -53,6 +54,14 @@ export class Bot {
   prepareMessagesForCompletion(messages: ChatCompletionRequestMessage[]): CreateChatCompletionRequest {
     const history = [this.preamble].concat(messages.filter((m) => m.role !== 'system'));
     return { model: this.model, messages: history };
+  }
+
+  toJSON() {
+    return {
+      owner: Number(this.owner),
+      name: this.name,
+      header: this.header,
+    };
   }
 }
 
@@ -66,9 +75,16 @@ export const BotService = {
     return bots.get(uid);
   },
 
+  getAll(owner: string) {
+    const id = Number(owner);
+    const botList = [];
+    bots.forEach(bot => { if (bot.owner === id) botList.push(bot); });
+    return botList;
+  },
+
   create(owner: string, name: string, header: string) {
     const uid = BotService.getUniqueId(owner, name);
-    bots.set(uid, new Bot(name, header));
+    bots.set(uid, new Bot(Number(owner), name, header));
   },
 
   remove(owner: string, name: string) {
