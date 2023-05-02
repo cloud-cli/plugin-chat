@@ -1,6 +1,6 @@
 import { Configuration, OpenAIApi } from 'openai';
 import { Request, Resource, Response } from '@cloud-cli/gw';
-import { BotService } from './bots.js';
+import { Bot, BotService } from './bots.js';
 import { AuthService } from './auth.js';
 
 const apiKey = String(process.env.API_KEY);
@@ -8,6 +8,7 @@ const debug = !!process.env.DEBUG;
 
 export class Chat extends Resource {
   auth = AuthService.isAuthenticated;
+
   readonly openai = new OpenAIApi(new Configuration({ apiKey }));
   readonly body = { json: {} };
 
@@ -20,16 +21,10 @@ export class Chat extends Resource {
       return;
     }
 
-    if (!bot) {
-      response.writeHead(400, 'Invalid bot');
-      response.end();
-      return;
-    }
-
     const { id } = await AuthService.getProfile(request);
     response.setHeader('X-Bot', bot);
 
-    const assistant = BotService.get(id, bot);
+    const assistant = bot ? BotService.get(id, bot) : new Bot('', 'Bot', '');
     const history = assistant.prepareMessagesForCompletion(messages);
 
     const start = Date.now();

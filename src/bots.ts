@@ -17,7 +17,7 @@ export class Bots extends Resource {
   async post(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
-    
+
     BotService.create(id, name, header);
 
     response.writeHead(201);
@@ -45,14 +45,16 @@ export class Bots extends Resource {
 
 export class Bot {
   readonly model: string = defaultModel;
-  constructor(protected owner: string|number, protected name: string, protected header: string) {}
+  constructor(protected owner: string | number, protected name: string, protected header: string) {}
 
   get preamble(): ChatCompletionRequestMessage {
     return { role: 'system', content: this.header };
   }
 
   prepareMessagesForCompletion(messages: ChatCompletionRequestMessage[]): CreateChatCompletionRequest {
-    const history = [this.preamble].concat(messages.filter((m) => m.role !== 'system'));
+    const systemMessage = this.header ? [this.preamble] : [];
+    const history = systemMessage.concat(messages.filter((m) => m.role !== 'system'));
+
     return { model: this.model, messages: history };
   }
 
@@ -78,7 +80,9 @@ export const BotService = {
   getAll(owner: string) {
     const id = Number(owner);
     const botList = [];
-    bots.forEach(bot => { if (bot.owner === id) botList.push(bot); });
+    bots.forEach((bot) => {
+      if (bot.owner === id) botList.push(bot);
+    });
     return botList;
   },
 

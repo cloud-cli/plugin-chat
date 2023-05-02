@@ -3,24 +3,31 @@ import { request as https } from 'https';
 import { Resource } from '@cloud-cli/gw';
 
 const authUrl = String(process.env.AUTH_URL);
+const authProfileUrl = String(process.env.AUTH_PROFILE_URL);
 
 export const AuthService = {
   async isAuthenticated(request: Request): Promise<boolean> {
     const cookie = request.headers.cookie;
 
-    if (!cookie) return Promise.resolve(false);
+    if (!cookie) {
+      return Promise.resolve(false);
+    }
 
     return new Promise((resolve) => {
       const auth = https(authUrl, { headers: { cookie } });
+
       auth.on('response', (res) => resolve(res.statusCode === 200));
-      auth.on('error', (e) => { console.log(e); resolve(false); });
+      auth.on('error', (e) => {
+        console.log(e);
+        resolve(false);
+      });
       auth.end();
     });
   },
 
   async getProfile(request: Request): Promise<any> {
     return new Promise((resolve, reject) => {
-      const auth = https(authUrl, { headers: { cookie: request.headers.cookie || '' } });
+      const auth = https(authProfileUrl, { headers: { cookie: request.headers.cookie || '' } });
       auth.on('response', (res) => {
         if (res.statusCode !== 200) {
           reject();
