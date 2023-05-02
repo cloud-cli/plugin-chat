@@ -11,6 +11,7 @@ export const AuthService = {
     return new Promise((resolve) => {
       const auth = https(authUrl, { headers: { cookie } });
       auth.on('response', (res) => resolve(res.statusCode !== 200));
+      auth.on('error', (e) => { console.log(e); resolve(false); });
       auth.end();
     });
   },
