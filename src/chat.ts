@@ -22,7 +22,7 @@ export class Chat extends Resource {
     }
 
     const { id } = await AuthService.getProfile(request);
-    response.setHeader('X-Bot', bot);
+    if (bot) response.setHeader('X-Bot', bot);
 
     const assistant = bot ? BotService.get(id, bot) : new Bot('', 'Bot', '');
     const history = assistant.prepareMessagesForCompletion(messages);
