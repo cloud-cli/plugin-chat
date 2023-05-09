@@ -80,9 +80,13 @@ export const BotService = {
   getAll(owner: string) {
     const id = Number(owner);
     const botList = [];
+
     bots.forEach((bot) => {
-      if (bot.owner === id) botList.push(bot);
+      if (bot?.owner === id) {
+        botList.push(bot);
+      }
     });
+
     return botList;
   },
 
