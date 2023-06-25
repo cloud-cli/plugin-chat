@@ -1,14 +1,17 @@
-import { Request, Resource, Response } from '@cloud-cli/gw';
-import { ChatCompletionRequestMessage, CreateChatCompletionRequest } from 'openai';
-import { AuthService } from './auth';
-import { createHash } from 'crypto';
-import { FileMap } from './file-map';
+import { Request, Resource, Response } from "@cloud-cli/gw";
+import {
+  ChatCompletionRequestMessage,
+  CreateChatCompletionRequest,
+} from "openai";
+import { AuthService } from "./auth";
+import { createHash } from "crypto";
+import { FileMap } from "./file-map";
 
-const defaultModel = 'gpt-3.5-turbo';
+const defaultModel = "gpt-3.5-turbo";
 const storagePath = String(process.env.BOT_STORAGE_PATH);
 
 const bots = new FileMap(storagePath);
-const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 export class Bots extends Resource {
   auth = AuthService.isAuthenticated;
@@ -17,8 +20,9 @@ export class Bots extends Resource {
   async post(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
+    const bot = await BotService.create(id, name, header);
 
-    BotService.create(id, name, header);
+    console.log("CREATE", JSON.stringify(bot));
 
     response.writeHead(201);
     response.end(name);
@@ -27,7 +31,9 @@ export class Bots extends Resource {
   async get(request: Request, response: Response) {
     const { id } = await AuthService.getProfile(request);
     const name = request.url.slice(1);
-    const bot = name ? BotService.get(id, name) : BotService.getAll(id);
+    const bot = name
+      ? await BotService.get(id, name)
+      : await BotService.getAll(id);
 
     response.writeHead(bot ? 200 : 404);
     response.end(JSON.stringify(bot));
@@ -45,15 +51,23 @@ export class Bots extends Resource {
 
 export class Bot {
   readonly model: string = defaultModel;
-  constructor(protected owner: string | number, protected name: string, protected header: string) {}
+  constructor(
+    protected owner: string | number,
+    protected name: string,
+    protected header: string
+  ) {}
 
   get preamble(): ChatCompletionRequestMessage {
-    return { role: 'system', content: this.header };
+    return { role: "system", content: this.header };
   }
 
-  prepareMessagesForCompletion(messages: ChatCompletionRequestMessage[]): CreateChatCompletionRequest {
+  prepareMessagesForCompletion(
+    messages: ChatCompletionRequestMessage[]
+  ): CreateChatCompletionRequest {
     const systemMessage = this.header ? [this.preamble] : [];
-    const history = systemMessage.concat(messages.filter((m) => m.role !== 'system'));
+    const history = systemMessage.concat(
+      messages.filter((m) => m.role !== "system")
+    );
 
     return { model: this.model, messages: history };
   }
@@ -92,11 +106,13 @@ export const BotService = {
 
   create(owner: string, name: string, header: string) {
     const uid = BotService.getUniqueId(owner, name);
-    bots.set(uid, new Bot(Number(owner), name, header));
+    const bot = new Bot(Number(owner), name, header);
+    bots.set(uid, bot);
+    return bot;
   },
 
   remove(owner: string, name: string) {
     const uid = BotService.getUniqueId(owner, name);
-    bots.delete(uid);
+    return bots.delete(uid);
   },
 };
