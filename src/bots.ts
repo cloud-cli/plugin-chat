@@ -18,6 +18,7 @@ export class Bots extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response) {
+    console.log(request.body);
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
     const bot = await BotService.create(id, name, header);
@@ -105,6 +106,7 @@ export const BotService = {
   },
 
   create(owner: string, name: string, header: string) {
+    console.log("Bots:create %d, %s, %s", owner, name, header);
     const uid = BotService.getUniqueId(owner, name);
     const bot = new Bot(Number(owner), name, header);
     bots.set(uid, bot);
