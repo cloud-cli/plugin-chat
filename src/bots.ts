@@ -19,7 +19,7 @@ export class Bots extends Resource {
   async post(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
-    const bot = await BotService.create(id, name, header);
+    const bot = await BotService.set(id, name, header);
 
     response.writeHead(201);
     response.end(JSON.stringify(bot));
@@ -28,7 +28,7 @@ export class Bots extends Resource {
   async put(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
-    await BotService.update(id, name, header);
+    await BotService.set(id, name, header);
 
     response.writeHead(202);
     response.end(name);
@@ -110,18 +110,7 @@ export const BotService = {
     return botList;
   },
 
-  create(owner: string, name: string, header: string) {
-    if (!owner || !name) {
-      throw new Error("Name and header are required");
-    }
-
-    const uid = BotService.getUniqueId(owner, name);
-    const bot = new Bot(Number(owner), name, header);
-    bots.set(uid, bot);
-    return bot;
-  },
-
-  update(owner: string, name: string, header: string) {
+  set(owner: string, name: string, header: string) {
     if (!owner || !name) {
       throw new Error("Name and header are required");
     }
