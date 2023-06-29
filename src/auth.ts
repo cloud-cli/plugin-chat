@@ -1,23 +1,31 @@
-import type { Request, Response } from '@cloud-cli/gw';
-import { request as https } from 'https';
-import { Resource } from '@cloud-cli/gw';
+import type { Request, Response } from "@cloud-cli/gw";
+import { request as https } from "https";
+import { Resource } from "@cloud-cli/gw";
 
+const authKey = String(process.env.AUTH_KEY);
 const authUrl = String(process.env.AUTH_URL);
 const authProfileUrl = String(process.env.AUTH_PROFILE_URL);
 
 export const AuthService = {
   async isAuthenticated(request: Request): Promise<boolean> {
-    const cookie = request.headers.cookie;
-
-    if (!cookie) {
-      return Promise.resolve(false);
+    if (request.headers.cookie) {
+      return AuthService.checkCookie(request);
     }
 
-    return new Promise((resolve) => {
+    if (request.headers.checkAuthorizationHeader) {
+      return AuthService.checkAuthorizationHeader(request);
+    }
+
+    return false;
+  },
+
+  async checkCookie(request: Request) {
+    return new Promise<boolean>((resolve) => {
+      const cookie = request.headers.cookie;
       const auth = https(authUrl, { headers: { cookie } });
 
-      auth.on('response', (res) => resolve(res.statusCode === 200));
-      auth.on('error', (e) => {
+      auth.on("response", (res) => resolve(res.statusCode === 200));
+      auth.on("error", (e) => {
         console.log(e);
         resolve(false);
       });
@@ -25,18 +33,35 @@ export const AuthService = {
     });
   },
 
+  async checkAuthorizationHeader(request: Request) {
+    const key = String(request.headers.authorization)
+      .replace(/bearer/i, "")
+      .trim();
+
+    if (key) {
+      return authKey === key;
+    }
+
+    return false;
+  },
+
   async getProfile(request: Request): Promise<any> {
     return new Promise((resolve, reject) => {
-      const auth = https(authProfileUrl, { headers: { cookie: request.headers.cookie || '' } });
-      auth.on('response', (res) => {
+      const auth = https(authProfileUrl, {
+        headers: { cookie: request.headers.cookie || "" },
+      });
+
+      auth.on("response", (res) => {
         if (res.statusCode !== 200) {
           reject();
           return;
         }
 
         const chunks = [];
-        res.on('data', (c) => chunks.push(c));
-        res.on('end', () => resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))));
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () =>
+          resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")))
+        );
       });
       auth.end();
     });

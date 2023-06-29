@@ -4,26 +4,10 @@ import { Bot, BotService } from "./bots.js";
 import { AuthService } from "./auth.js";
 
 const apiKey = String(process.env.API_KEY);
-const authKey = String(process.env.AUTH_KEY);
 const debug = !!process.env.DEBUG;
 
 export class Chat extends Resource {
-  auth = async (request: Request) => {
-    const isCookieAuthorized = AuthService.isAuthenticated(request);
-
-    if (!isCookieAuthorized) {
-      const key = String(request.headers.authorization)
-        .replace(/bearer/i, "")
-        .trim();
-
-      if (key) {
-        return authKey === key;
-      }
-    }
-
-    return false;
-  };
-
+  readonly auth = AuthService.isAuthenticated;
   readonly openai = new OpenAIApi(new Configuration({ apiKey }));
   readonly body = { json: {} };
 

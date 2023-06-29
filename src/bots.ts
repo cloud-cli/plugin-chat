@@ -16,22 +16,21 @@ export class Bots extends Resource {
   auth = AuthService.isAuthenticated;
   readonly body = { json: {} };
 
-  async post(request: Request, response: Response) {
+  private async updateBot(request: Request, response: Response) {
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
     const bot = await BotService.set(id, name, header);
 
-    response.writeHead(201);
+    response.writeHead(202, { "content-type": "application/json" });
     response.end(JSON.stringify(bot));
   }
 
-  async put(request: Request, response: Response) {
-    const { name, header } = request.body as any;
-    const { id } = await AuthService.getProfile(request);
-    await BotService.set(id, name, header);
+  async post(request: Request, response: Response) {
+    return this.updateBot(request, response);
+  }
 
-    response.writeHead(202);
-    response.end(name);
+  async put(request: Request, response: Response) {
+    return this.updateBot(request, response);
   }
 
   async get(request: Request, response: Response) {
@@ -48,7 +47,7 @@ export class Bots extends Resource {
   async delete(request: Request, response: Response) {
     const { id } = await AuthService.getProfile(request);
     const name = request.url.slice(1);
-    BotService.remove(id, name);
+    await BotService.remove(id, name);
 
     response.writeHead(204);
     response.end();
@@ -118,11 +117,13 @@ export const BotService = {
     const uid = BotService.getUniqueId(owner, name);
     const bot = new Bot(Number(owner), name, header);
     bots.set(uid, bot);
+
     return bot;
   },
 
   remove(owner: string, name: string) {
     const uid = BotService.getUniqueId(owner, name);
+
     return bots.delete(uid);
   },
 };
