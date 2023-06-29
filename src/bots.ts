@@ -5,12 +5,11 @@ import {
 } from "openai";
 import { AuthService } from "./auth";
 import { createHash } from "crypto";
-import { FileMap } from "./file-map";
+import { StoreMap } from "./store-map";
 
 const defaultModel = "gpt-3.5-turbo";
-const storagePath = String(process.env.BOT_STORAGE_PATH);
 
-const bots = new FileMap(storagePath);
+const bots = new StoreMap("bots");
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 export class Bots extends Resource {
@@ -18,14 +17,20 @@ export class Bots extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response) {
-    console.log(request.body);
     const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
     const bot = await BotService.create(id, name, header);
 
-    console.log("CREATE", JSON.stringify(bot));
-
     response.writeHead(201);
+    response.end(JSON.stringify(bot));
+  }
+
+  async put(request: Request, response: Response) {
+    const { name, header } = request.body as any;
+    const { id } = await AuthService.getProfile(request);
+    await BotService.update(id, name, header);
+
+    response.writeHead(202);
     response.end(name);
   }
 
@@ -106,7 +111,21 @@ export const BotService = {
   },
 
   create(owner: string, name: string, header: string) {
-    console.log("Bots:create %d, %s, %s", owner, name, header);
+    if (!owner || !name) {
+      throw new Error("Name and header are required");
+    }
+
+    const uid = BotService.getUniqueId(owner, name);
+    const bot = new Bot(Number(owner), name, header);
+    bots.set(uid, bot);
+    return bot;
+  },
+
+  update(owner: string, name: string, header: string) {
+    if (!owner || !name) {
+      throw new Error("Name and header are required");
+    }
+
     const uid = BotService.getUniqueId(owner, name);
     const bot = new Bot(Number(owner), name, header);
     bots.set(uid, bot);

@@ -1,13 +1,28 @@
-import { Configuration, OpenAIApi } from 'openai';
-import { Request, Resource, Response } from '@cloud-cli/gw';
-import { Bot, BotService } from './bots.js';
-import { AuthService } from './auth.js';
+import { Configuration, OpenAIApi } from "openai";
+import { Request, Resource, Response } from "@cloud-cli/gw";
+import { Bot, BotService } from "./bots.js";
+import { AuthService } from "./auth.js";
 
 const apiKey = String(process.env.API_KEY);
+const authKey = String(process.env.AUTH_KEY);
 const debug = !!process.env.DEBUG;
 
 export class Chat extends Resource {
-  auth = AuthService.isAuthenticated;
+  auth = async (request: Request) => {
+    const isCookieAuthorized = AuthService.isAuthenticated(request);
+
+    if (!isCookieAuthorized) {
+      const key = String(request.headers.authorization)
+        .replace(/bearer/i, "")
+        .trim();
+
+      if (key) {
+        return authKey === key;
+      }
+    }
+
+    return false;
+  };
 
   readonly openai = new OpenAIApi(new Configuration({ apiKey }));
   readonly body = { json: {} };
@@ -16,32 +31,40 @@ export class Chat extends Resource {
     let { bot, messages } = request.body as any;
 
     if (!messages) {
-      response.writeHead(400, 'Messages required');
+      response.writeHead(400, "Messages required");
       response.end();
       return;
     }
 
     const { id } = await AuthService.getProfile(request);
-    if (bot) response.setHeader('X-Bot', bot);
+    if (bot) {
+      response.setHeader("X-Bot", bot);
+    }
 
-    const assistant = bot ? BotService.get(id, bot) : new Bot('', 'Bot', '');
+    const assistant = bot ? BotService.get(id, bot) : new Bot("", "Bot", "");
     const history = assistant.prepareMessagesForCompletion(messages);
 
     const start = Date.now();
     if (debug) {
-      console.log('REQUEST', JSON.stringify(history));
+      console.log("REQUEST", JSON.stringify(history));
     }
 
     try {
       const completion = await this.openai.createChatCompletion(history);
 
       if (debug) {
-        console.log('RESPONSE in %s seconds', (Date.now() - start) / 1000, JSON.stringify(completion.data));
+        console.log(
+          "RESPONSE in %s seconds",
+          (Date.now() - start) / 1000,
+          JSON.stringify(completion.data)
+        );
       }
 
-      const responses = completion.data.choices.map((c) => JSON.stringify(c.message)).join('\n');
+      const responses = completion.data.choices
+        .map((c) => JSON.stringify(c.message))
+        .join("\n");
 
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.writeHead(200, { "Content-Type": "text/plain" });
       response.end(responses);
     } catch (error) {
       console.error(error);
