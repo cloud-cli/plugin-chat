@@ -18,14 +18,25 @@ export class Chat extends Resource {
       context = {},
     } = request.body as any;
 
-    const { id } = await AuthService.getProfile(request);
-    if (bot) {
-      response.setHeader("X-Bot", bot);
+    if (!bot) {
+      response.writeHead(400);
+      response.end("Bot name required");
+      return;
     }
 
-    const assistant = bot
-      ? await BotService.get(id, bot)
-      : new Bot("", "Bot", "");
+    const { id } = await AuthService.getProfile(request);
+
+    let assistant: Bot;
+
+    try {
+      assistant = await BotService.get(id, bot);
+    } catch (error) {
+      console.log(error);
+      response.writeHead(500);
+      response.end();
+      return;
+    }
+
     const history = assistant.prepareMessagesForCompletion(messages, context);
     const start = Date.now();
 
@@ -53,7 +64,7 @@ export class Chat extends Resource {
     } catch (error) {
       console.error(error);
       response.writeHead(500);
-      response.end(String(error));
+      response.end();
     }
   }
 }

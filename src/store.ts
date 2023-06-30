@@ -46,7 +46,7 @@ export class Store<T = any> {
     const url = new URL(this.name + "/" + id, storeUrl);
     console.log("read", String(url));
     const x = await fetch(url);
-    return await x.json();
+    return x.ok ? await x.json() : null;
   }
 
   private async start() {

@@ -16,7 +16,13 @@ export const BotService = {
 
   async get(owner: string, name: string) {
     const uid = BotService.getUniqueId(owner, name);
-    return bots.get(uid);
+    const data = await bots.get(uid);
+
+    if (!data) {
+      throw new Error("404");
+    }
+
+    return new Bot(owner, data.name, data.header);
   },
 
   async list(owner: string) {
