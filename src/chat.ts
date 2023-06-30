@@ -11,20 +11,21 @@ export class Chat extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let { bot, messages, context = {} } = request.body as any;
-
-    if (!messages) {
-      response.writeHead(400, "Messages required");
-      response.end();
-      return;
-    }
+    let {
+      bot,
+      format = "json",
+      messages = [],
+      context = {},
+    } = request.body as any;
 
     const { id } = await AuthService.getProfile(request);
     if (bot) {
       response.setHeader("X-Bot", bot);
     }
 
-    const assistant = bot ? await BotService.get(id, bot) : new Bot("", "Bot", "");
+    const assistant = bot
+      ? await BotService.get(id, bot)
+      : new Bot("", "Bot", "");
     const history = assistant.prepareMessagesForCompletion(messages, context);
     const start = Date.now();
 
@@ -39,12 +40,16 @@ export class Chat extends Resource {
         JSON.stringify(completion.data)
       );
 
-      const responses = completion.data.choices
-        .map((c) => JSON.stringify(c.message))
-        .join("\n");
+      const responses = completion.data.choices;
 
-      response.writeHead(200, { "Content-Type": "text/plain" });
-      response.end(responses);
+      if (format === "text") {
+        response.writeHead(200, { "Content-Type": "text/plain" });
+        response.end(responses.map((c) => c.message.content).join("\n"));
+        return;
+      }
+
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(responses.map((c) => JSON.stringify(c.message)).join("\n"));
     } catch (error) {
       console.error(error);
       response.writeHead(500);
