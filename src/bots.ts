@@ -1,16 +1,6 @@
 import { Request, Resource, Response } from "@cloud-cli/gw";
-import {
-  ChatCompletionRequestMessage,
-  CreateChatCompletionRequest,
-} from "openai";
 import { AuthService } from "./auth";
-import { createHash } from "crypto";
-import { StoreMap } from "./store-map";
-
-const defaultModel = "gpt-3.5-turbo";
-
-const bots = new StoreMap("bots");
-const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+import { BotService } from "./bot-service";
 
 export class Bots extends Resource {
   auth = AuthService.isAuthenticated;
@@ -38,7 +28,7 @@ export class Bots extends Resource {
     const name = request.url.slice(1);
     const bot = name
       ? await BotService.get(id, name)
-      : await BotService.getAll(id);
+      : await BotService.list(id);
 
     response.writeHead(bot ? 200 : 404);
     response.end(JSON.stringify(bot));
@@ -53,84 +43,3 @@ export class Bots extends Resource {
     response.end();
   }
 }
-
-export class Bot {
-  readonly model: string = defaultModel;
-  constructor(
-    protected owner: string | number,
-    protected name: string,
-    protected header: string
-  ) {}
-
-  getPreamble(context: Record<any, any> = {}): ChatCompletionRequestMessage {
-    return {
-      role: "system",
-      content: this.header.replace(
-        /\{([\s\S]+?)\}/g,
-        (_, inner) => context[inner.trim()] || ""
-      ),
-    };
-  }
-
-  prepareMessagesForCompletion(
-    messages: ChatCompletionRequestMessage[],
-    context?: Record<any, any>
-  ): CreateChatCompletionRequest {
-    const systemMessage = this.header ? [this.getPreamble(context)] : [];
-    const history = systemMessage.concat(
-      messages.filter((m) => m.role !== "system")
-    );
-
-    return { model: this.model, messages: history };
-  }
-
-  toJSON() {
-    return {
-      owner: Number(this.owner),
-      name: this.name,
-      header: this.header,
-    };
-  }
-}
-
-export const BotService = {
-  getUniqueId(id: string, name: string) {
-    return sha(`${id}:${name}`);
-  },
-
-  get(owner: string, name: string) {
-    const uid = BotService.getUniqueId(owner, name);
-    return bots.get(uid);
-  },
-
-  getAll(owner: string) {
-    const id = Number(owner);
-    const botList = [];
-
-    bots.forEach((bot) => {
-      if (bot?.owner === id) {
-        botList.push(bot);
-      }
-    });
-
-    return botList;
-  },
-
-  set(owner: string, name: string, header: string) {
-    if (!owner || !name) {
-      throw new Error("Name and header are required");
-    }
-
-    const uid = BotService.getUniqueId(owner, name);
-    const bot = new Bot(Number(owner), name, header);
-    bots.set(uid, bot);
-
-    return bot;
-  },
-
-  remove(owner: string, name: string) {
-    const uid = BotService.getUniqueId(owner, name);
-
-    return bots.delete(uid);
-  },
-};
