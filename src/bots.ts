@@ -1,6 +1,6 @@
 import { Request, Resource, Response } from "@cloud-cli/gw";
-import { AuthService } from "./auth";
-import { BotService } from "./bot-service";
+import { AuthService } from "./auth.js";
+import { BotService } from "./bot-service.js";
 
 export class Bots extends Resource {
   auth = AuthService.isAuthenticated;

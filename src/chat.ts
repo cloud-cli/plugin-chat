@@ -1,6 +1,6 @@
 import { Configuration, OpenAIApi } from "openai";
 import { Request, Resource, Response } from "@cloud-cli/gw";
-import { Bot, BotService } from "./bots.js";
+import { Bot, BotService } from "./bot-service.js";
 import { AuthService } from "./auth.js";
 
 const apiKey = String(process.env.API_KEY);
@@ -24,7 +24,7 @@ export class Chat extends Resource {
       response.setHeader("X-Bot", bot);
     }
 
-    const assistant = bot ? BotService.get(id, bot) : new Bot("", "Bot", "");
+    const assistant = bot ? await BotService.get(id, bot) : new Bot("", "Bot", "");
     const history = assistant.prepareMessagesForCompletion(messages, context);
     const start = Date.now();
 
