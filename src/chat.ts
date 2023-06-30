@@ -4,7 +4,6 @@ import { Bot, BotService } from "./bots.js";
 import { AuthService } from "./auth.js";
 
 const apiKey = String(process.env.API_KEY);
-const debug = !!process.env.DEBUG;
 
 export class Chat extends Resource {
   readonly auth = AuthService.isAuthenticated;
@@ -12,7 +11,7 @@ export class Chat extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let { bot, messages } = request.body as any;
+    let { bot, messages, context = {} } = request.body as any;
 
     if (!messages) {
       response.writeHead(400, "Messages required");
@@ -26,23 +25,19 @@ export class Chat extends Resource {
     }
 
     const assistant = bot ? BotService.get(id, bot) : new Bot("", "Bot", "");
-    const history = assistant.prepareMessagesForCompletion(messages);
-
+    const history = assistant.prepareMessagesForCompletion(messages, context);
     const start = Date.now();
-    if (debug) {
-      console.log("REQUEST", JSON.stringify(history));
-    }
+
+    console.log("REQUEST", JSON.stringify(history));
 
     try {
       const completion = await this.openai.createChatCompletion(history);
 
-      if (debug) {
-        console.log(
-          "RESPONSE in %s seconds",
-          (Date.now() - start) / 1000,
-          JSON.stringify(completion.data)
-        );
-      }
+      console.log(
+        "RESPONSE in %s seconds",
+        (Date.now() - start) / 1000,
+        JSON.stringify(completion.data)
+      );
 
       const responses = completion.data.choices
         .map((c) => JSON.stringify(c.message))

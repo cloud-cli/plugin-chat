@@ -62,14 +62,21 @@ export class Bot {
     protected header: string
   ) {}
 
-  get preamble(): ChatCompletionRequestMessage {
-    return { role: "system", content: this.header };
+  getPreamble(context: Record<any, any> = {}): ChatCompletionRequestMessage {
+    return {
+      role: "system",
+      content: this.header.replace(
+        /\{([\s\S]+?)\}/g,
+        (_, inner) => context[inner.trim()] || ""
+      ),
+    };
   }
 
   prepareMessagesForCompletion(
-    messages: ChatCompletionRequestMessage[]
+    messages: ChatCompletionRequestMessage[],
+    context?: Record<any, any>
   ): CreateChatCompletionRequest {
-    const systemMessage = this.header ? [this.preamble] : [];
+    const systemMessage = this.header ? [this.getPreamble(context)] : [];
     const history = systemMessage.concat(
       messages.filter((m) => m.role !== "system")
     );

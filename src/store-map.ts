@@ -40,5 +40,6 @@ export class StoreMap extends Map<string, any> {
     const files = await this.list();
     files.forEach((file) => this.set(file.uid, file));
     this.enableWrite = true;
+    console.log('store started with %d items', files.length);
   }
 }
