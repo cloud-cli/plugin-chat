@@ -4,7 +4,6 @@ import { Resource } from "@cloud-cli/gw";
 
 const authKey = String(process.env.AUTH_KEY);
 const authUrl = String(process.env.AUTH_URL);
-const authProfileUrl = String(process.env.AUTH_PROFILE_URL);
 
 export const AuthService = {
   async isAuthenticated(request: Request): Promise<boolean> {
@@ -47,13 +46,13 @@ export const AuthService = {
 
   async getProfile(request: Request): Promise<any> {
     return new Promise((resolve, reject) => {
-      const auth = https(authProfileUrl, {
+      const auth = https(authUrl, {
         headers: { cookie: request.headers.cookie || "" },
       });
 
       auth.on("response", (res) => {
         if (res.statusCode !== 200) {
-          reject();
+          reject(res.statusCode);
           return;
         }
 
