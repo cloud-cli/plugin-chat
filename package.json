@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "@cloud-cli/gw": "^1.6.1",
-    "openai": "^3.2.1"
+    "openai": "^3.3.0"
   }
 }
