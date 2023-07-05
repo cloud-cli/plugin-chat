@@ -1,7 +1,7 @@
 import { Configuration, OpenAIApi } from "openai";
 import { Request, Resource, Response } from "@cloud-cli/gw";
 import { Bot, BotService } from "./bot-service.js";
-import { AuthService } from "./auth.js";
+import { AuthService } from "./auth-service.js";
 
 const apiKey = String(process.env.API_KEY);
 
@@ -11,25 +11,20 @@ export class Chat extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let {
-      bot,
-      format = "json",
-      messages = [],
-      context = {},
-    } = request.body as any;
+    let { bot, format = "", messages = [], context = {} } = request.body as any;
 
     if (!bot) {
       response.writeHead(400);
-      response.end("Bot name required");
+      response.end("Bot name is required");
       return;
     }
 
-    const { id } = await AuthService.getProfile(request);
+    const { id: owner } = await AuthService.getProfile(request);
 
     let assistant: Bot;
 
     try {
-      assistant = await BotService.get(id, bot);
+      assistant = await BotService.get(owner, bot);
     } catch (error) {
       console.log(error);
       response.writeHead(500);
@@ -53,7 +48,7 @@ export class Chat extends Resource {
 
       const responses = completion.data.choices;
 
-      if (format === "text") {
+      if (format === "text" || assistant.format === "text") {
         response.writeHead(200, { "Content-Type": "text/plain" });
         response.end(responses.map((c) => c.message.content).join("\n"));
         return;

@@ -1,4 +1,4 @@
-import type { Request, Response } from "@cloud-cli/gw";
+import type { Request } from "@cloud-cli/gw";
 import { request as https } from "https";
 
 const authKey = String(process.env.AUTH_KEY);
