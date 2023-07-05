@@ -4,8 +4,9 @@
 
 | name             | desc                                 | required |
 | ---------------- | ------------------------------------ | -------- |
-| BOT_STORAGE_PATH | Path to folder where bots are stored | true     |
-| AUTH_URL         | Address of authentication server     | true     |
-| API_KEY          | API key for completions              | true     |
+| AUTH_URL         | Address of authentication/SSO server | true     |
+| API_KEY          | API key for AI completions           | true     |
 | PORT             | HTTP server port                     | true     |
-| DEBUG            | toggle debugging on/off              | false    |
+| AUTH_KEY         | Key to allow API access without SSO  | false    |
+| STORE_URL        | Address of a data store to use.      | false    |
+| DEFAULT_MODEL    | Default AI model to use.             | false    |
