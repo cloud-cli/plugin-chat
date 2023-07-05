@@ -1,5 +1,5 @@
 import { Request, Resource, Response } from "@cloud-cli/gw";
-import { AuthService } from "./auth.js";
+import { AuthService } from "./auth-service.js";
 import { BotService } from "./bot-service.js";
 
 export class Bots extends Resource {
@@ -7,9 +7,8 @@ export class Bots extends Resource {
   readonly body = { json: {} };
 
   private async updateBot(request: Request, response: Response) {
-    const { name, header } = request.body as any;
     const { id } = await AuthService.getProfile(request);
-    const bot = await BotService.set(id, name, header);
+    const bot = await BotService.set(id, request.body as any);
 
     response.writeHead(202, { "content-type": "application/json" });
     response.end(JSON.stringify(bot));

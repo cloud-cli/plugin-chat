@@ -3,63 +3,24 @@ import {
   CreateChatCompletionRequest,
 } from "openai";
 import { createHash } from "crypto";
-import { Store } from "./store";
+import { Model, Primary, Property, Resource, Query } from "@cloud-cli/store";
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
-const bots = new Store("bots");
-const defaultModel = "gpt-3.5-turbo";
+const getUniqueId = (owner: string, name: string) => sha(`${owner}:${name}`);
+const defaultModel = process.env.DEFAULT_MODEL;
 
-export const BotService = {
-  getUniqueId(id: string, name: string) {
-    return sha(`${id}:${name}`);
-  },
+@Model("bot")
+export class Bot extends Resource {
+  @Primary() @Property(String) uid: string;
+  @Property(Number) owner: number;
+  @Property(String) name: string;
+  @Property(String) header: string;
+  @Property(String) format: string;
+  @Property(String, defaultModel) readonly model: string;
 
-  async get(owner: string, name: string) {
-    const uid = BotService.getUniqueId(owner, name);
-    const data = await bots.get(uid);
-
-    if (!data) {
-      throw new Error("404");
-    }
-
-    return new Bot(owner, data.name, data.header);
-  },
-
-  async list(owner: string) {
-    const id = Number(owner);
-    const botList = await bots.list();
-
-    return botList.filter((bot) => bot?.owner === id);
-  },
-
-  async set(owner: string, name: string, header: string) {
-    if (!owner || !name) {
-      throw new Error("Name and header are required");
-    }
-
-    const uid = BotService.getUniqueId(owner, name);
-    const bot = new Bot(Number(owner), name, header);
-    bots.set(uid, bot);
-
-    return bot;
-  },
-
-  remove(owner: string, name: string) {
-    const uid = BotService.getUniqueId(owner, name);
-
-    return bots.delete(uid);
-  },
-};
-
-export class Bot {
-  readonly model: string = defaultModel;
-  constructor(
-    protected owner: string | number,
-    protected name: string,
-    protected header: string
-  ) {}
-
-  getPreamble(context: Record<any, any> = {}): ChatCompletionRequestMessage {
+  getSystemHeader(
+    context: Record<any, any> = {}
+  ): ChatCompletionRequestMessage {
     return {
       role: "system",
       content: this.header.replace(
@@ -73,7 +34,7 @@ export class Bot {
     messages: ChatCompletionRequestMessage[],
     context?: Record<any, any>
   ): CreateChatCompletionRequest {
-    const systemMessage = this.header ? [this.getPreamble(context)] : [];
+    const systemMessage = this.header ? [this.getSystemHeader(context)] : [];
     const history = systemMessage.concat(
       messages.filter((m) => m.role !== "system")
     );
@@ -83,9 +44,42 @@ export class Bot {
 
   toJSON() {
     return {
-      owner: Number(this.owner),
+      owner: this.owner,
       name: this.name,
       header: this.header,
+      format: this.format,
+      model: this.model,
     };
   }
 }
+
+export const BotService = {
+  async get(owner: string, name: string) {
+    const uid = getUniqueId(owner, name);
+    const bot = new Bot({ uid });
+    return bot.find();
+  },
+
+  async list(owner: string) {
+    return Resource.find(Bot, new Query<Bot>().where("owner").is(owner));
+  },
+
+  async set(owner: string, data: Partial<Bot>) {
+    if (!owner || !data.name) {
+      throw new Error("Name is required");
+    }
+
+    const uid = getUniqueId(owner, data.name);
+    const bot = new Bot({ ...data, uid, owner });
+
+    await bot.save();
+
+    return bot;
+  },
+
+  remove(owner: string, name: string) {
+    const uid = getUniqueId(owner, name);
+    const bot = new Bot({ uid });
+    return bot.remove();
+  },
+};

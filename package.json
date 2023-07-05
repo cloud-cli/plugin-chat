@@ -22,6 +22,7 @@
     "@cloud-cli/prettier-config": "^1.0.0",
     "@cloud-cli/rollup-config": "^1.0.0",
     "@cloud-cli/typescript-config": "^1.0.0",
+    "@cloud-cli/store": "^2.0.0",
     "@types/node": "^18.15.11"
   },
   "dependencies": {
