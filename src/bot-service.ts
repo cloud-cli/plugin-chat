@@ -9,7 +9,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const getUniqueId = (owner: string, name: string) => sha(`${owner}:${name}`);
 const defaultModel = process.env.DEFAULT_MODEL;
 
-@Model("bot")
+@Model("bots")
 export class Bot extends Resource {
   @Primary() @Property(String) uid: string;
   @Property(Number) owner: number;
@@ -61,6 +61,7 @@ export const BotService = {
   },
 
   async list(owner: string) {
+    console.log();
     return Resource.find(Bot, new Query<Bot>().where("owner").is(owner));
   },
 
