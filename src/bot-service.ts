@@ -39,7 +39,10 @@ export class Bot extends Resource {
       messages.filter((m) => m.role !== "system")
     );
 
-    return { model: this.model, messages: history };
+    return {
+      model: context.model || this.model || defaultModel,
+      messages: history,
+    };
   }
 
   toJSON() {

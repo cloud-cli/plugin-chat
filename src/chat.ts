@@ -11,7 +11,7 @@ export class Chat extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let { bot, format = "", messages = [], context = {} } = request.body as any;
+    let { bot, format = "", messages = [], context = {}, model } = request.body as any;
 
     if (!bot) {
       response.writeHead(400);
@@ -32,7 +32,10 @@ export class Chat extends Resource {
       return;
     }
 
-    const history = assistant.prepareMessagesForCompletion(messages, context);
+    const history = assistant.prepareMessagesForCompletion(messages, {
+      ...context,
+      model,
+    });
     const start = Date.now();
 
     console.log("REQUEST", JSON.stringify(history));
