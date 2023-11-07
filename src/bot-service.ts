@@ -42,6 +42,9 @@ export class Bot extends Resource {
     return {
       model: context.model || this.model || defaultModel,
       messages: history,
+      response_format: {
+        type: context.format === "json" ? "json_object" : "text",
+      },
     };
   }
 

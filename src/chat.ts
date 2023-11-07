@@ -11,7 +11,13 @@ export class Chat extends Resource {
   readonly body = { json: {} };
 
   async post(request: Request, response: Response): Promise<any> {
-    let { bot, format = "", messages = [], context = {}, model } = request.body as any;
+    let {
+      bot,
+      format = "",
+      messages = [],
+      context = {},
+      model,
+    } = request.body as any;
 
     if (!bot) {
       response.writeHead(400);
@@ -32,9 +38,12 @@ export class Chat extends Resource {
       return;
     }
 
+    format ||= assistant.format;
+
     const history = assistant.prepareMessagesForCompletion(messages, {
       ...context,
       model,
+      format,
     });
     const start = Date.now();
 
@@ -51,7 +60,7 @@ export class Chat extends Resource {
 
       const responses = completion.data.choices;
 
-      if (format === "text" || assistant.format === "text") {
+      if (format === "text") {
         response.writeHead(200, { "Content-Type": "text/plain" });
         response.end(responses.map((c) => c.message.content).join("\n"));
         return;
