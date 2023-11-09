@@ -19,9 +19,12 @@ api.add("bots", new Bots());
 createServer((req, res) => {
   if (req.url === "/chat.mjs" || req.url === "/chat.js") {
     const code = client.replace("__BASE_URL__", String(req.headers["x-forwarded-for"]));
-    res.setHeader("cache-control", "public,max-age=604800");
-    res.setHeader("content-type", "text/javascript");
-    res.setHeader("content-length", code.length);
+    res.writeHead(200, {
+      "Content-Type": "text/javascript",
+      "Content-Length": code.length,
+      "Cache-Control": "max-age=604800, must-revalidate",
+      "Access-Control-Allow-Origin": "*",
+    });
     res.end(code);
     return;
   }
