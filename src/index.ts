@@ -17,7 +17,7 @@ api.add("chat", new Chat());
 api.add("bots", new Bots());
 
 createServer((req, res) => {
-  if (req.url === "/chat.mjs" || req.url === "/chat.js") {
+  if (req.url === "/chat.mjs" || req.url === "/chat.js" || req.url === "/index.mjs") {
     const code = client.replace("__BASE_URL__", String(req.headers["x-forwarded-for"]));
     res.writeHead(200, {
       "Content-Type": "text/javascript",
